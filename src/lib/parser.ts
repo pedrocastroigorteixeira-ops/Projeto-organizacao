@@ -23,7 +23,7 @@ export function formatDate(date: Date): string {
  */
 export function formatFriendlyDate(dateStr: string | null): string {
   if (!dateStr) return 'Sem data';
-  
+
   const todayStr = formatDate(new Date());
   if (dateStr === todayStr) return 'Hoje';
 
@@ -66,13 +66,16 @@ export function parseQuickCapture(
     };
   }
 
-  let textWorking = rawInput;
+  // Adiciona espaços nas pontas para facilitar regex com lookaround de limites de palavra
+  let textWorking = ` ${rawInput} `;
 
   // 1. Tipo: :nota ou :ideia
   let itemType: ItemType = 'task';
-  if (/(?::nota|:ideia|:idea)\b/i.test(textWorking)) {
+  const typeRegex = /(?<=^|\s)(:nota|:ideia|:idea)(?=\s|$)/iu;
+  const typeMatch = textWorking.match(typeRegex);
+  if (typeMatch) {
     itemType = 'note';
-    textWorking = textWorking.replace(/(?::nota|:ideia|:idea)\b/gi, ' ');
+    textWorking = textWorking.replace(typeRegex, ' ');
   }
 
   // 2. Prioridade alta: !!
@@ -82,37 +85,42 @@ export function parseQuickCapture(
     textWorking = textWorking.replace(/!!+/g, ' ');
   }
 
-  // 3. Esforço: :rapida, :media, :longa
+  // 3. Esforço: :rapida, :media, :longa (com ou sem acento)
   let effort: EffortType | null = null;
   let effortLabel: string | null = null;
-  if (/(?::rapida|:r[aá]pida)\b/i.test(textWorking)) {
+
+  const quickEffortRegex = /(?<=^|\s)(:rapida|:r[aá]pida)(?=\s|$)/iu;
+  const mediumEffortRegex = /(?<=^|\s)(:media|:m[eé]dia)(?=\s|$)/iu;
+  const longEffortRegex = /(?<=^|\s)(:longa)(?=\s|$)/iu;
+
+  if (quickEffortRegex.test(textWorking)) {
     effort = 'quick';
     effortLabel = EFFORT_LABELS.quick.label;
-    textWorking = textWorking.replace(/(?::rapida|:r[aá]pida)\b/gi, ' ');
-  } else if (/(?::media|:m[eé]dia)\b/i.test(textWorking)) {
+    textWorking = textWorking.replace(quickEffortRegex, ' ');
+  } else if (mediumEffortRegex.test(textWorking)) {
     effort = 'medium';
     effortLabel = EFFORT_LABELS.medium.label;
-    textWorking = textWorking.replace(/(?::media|:m[eé]dia)\b/gi, ' ');
-  } else if (/(?::longa)\b/i.test(textWorking)) {
+    textWorking = textWorking.replace(mediumEffortRegex, ' ');
+  } else if (longEffortRegex.test(textWorking)) {
     effort = 'long';
     effortLabel = EFFORT_LABELS.long.label;
-    textWorking = textWorking.replace(/(?::longa)\b/gi, ' ');
+    textWorking = textWorking.replace(longEffortRegex, ' ');
   }
 
   // 4. Recorrência: 'toda seg', 'todo dia 5', 'todo dia 15', 'a cada X semanas'
   let recurrence: string | null = null;
-  const recurrenceRegex = /\b(todo\s+dia\s+\d{1,2}|toda\s+(?:segunda|ter[cç]a|quarta|quinta|sexta|s[aá]bado|domingo|seg|ter|qua|qui|sex|s[aá]b|dom)(?:-feira)?|a\s+cada\s+\d+\s+semanas(?:\s+na\s+\w+)?)\b/i;
+  const recurrenceRegex = /(?<=^|\s)(todo\s+dia\s+\d{1,2}|toda\s+(?:segunda|ter[cç]a|quarta|quinta|sexta|s[aá]bado|domingo|seg|ter|qua|qui|sex|s[aá]b|dom)(?:-feira)?|a\s+cada\s+\d+\s+semanas(?:\s+na\s+\w+)?)(?=\s|$)/iu;
   const recurrenceMatch = textWorking.match(recurrenceRegex);
   if (recurrenceMatch) {
     recurrence = recurrenceMatch[1].trim();
-    textWorking = textWorking.replace(recurrenceMatch[0], ' ');
+    textWorking = textWorking.replace(recurrenceRegex, ' ');
   }
 
   // 5. Frente / Empresa com hashtag: #divino, #bendito, #proj, #pessoal
   let area: Area | null = null;
   let unrecognizedArea: string | null = null;
 
-  const hashtagMatch = textWorking.match(/(?:^|\s)#([a-zA-Z0-9À-ÿ_-]+)/i);
+  const hashtagMatch = textWorking.match(/(?<=^|\s)#([a-zA-Z0-9À-ÿ_-]+)(?=\s|$)/u);
   if (hashtagMatch) {
     const rawTag = hashtagMatch[1];
     const normalizedTag = normalizeString(rawTag);
@@ -134,20 +142,20 @@ export function parseQuickCapture(
       unrecognizedArea = `#${rawTag}`;
     }
 
-    // Remove a tag do texto
+    // Remove a hashtag do texto
     textWorking = textWorking.replace(hashtagMatch[0], ' ');
   }
 
   // 6. Horário: 14h, 18h, 14:30, 14h30, 9h
   let scheduledTime: string | null = null;
-  const timeRegex = /\b(\d{1,2})(?:h|:)(\d{2})?\b/i;
+  const timeRegex = /(?<=^|\s)(\d{1,2})(?:h|:)(\d{2})?(?=\s|$)/iu;
   const timeMatch = textWorking.match(timeRegex);
   if (timeMatch) {
     const hour = parseInt(timeMatch[1], 10);
     const minute = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
     if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
       scheduledTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-      textWorking = textWorking.replace(timeMatch[0], ' ');
+      textWorking = textWorking.replace(timeRegex, ' ');
     }
   }
 
@@ -159,8 +167,11 @@ export function parseQuickCapture(
   const currentDay = now.getDay(); // 0 = dom, 1 = seg...
 
   // Regex para data numérica DD/MM ou DD/MM/AAAA
-  const numericDateRegex = /\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/;
+  const numericDateRegex = /(?<=^|\s)(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?(?=\s|$)/u;
   const numMatch = textWorking.match(numericDateRegex);
+
+  const hojeRegex = /(?<=^|\s)hoje(?=\s|$)/iu;
+  const amanhaRegex = /(?<=^|\s)(amanh[aã]|amanha)(?=\s|$)/iu;
 
   if (numMatch) {
     const day = parseInt(numMatch[1], 10);
@@ -168,24 +179,22 @@ export function parseQuickCapture(
     let year = numMatch[3] ? parseInt(numMatch[3], 10) : now.getFullYear();
     if (year < 100) year += 2000;
 
-    // Se o mês já passou este ano e o ano não foi fornecido explicitamente, projeta pro próximo ano
     const targetDate = new Date(year, month - 1, day);
     scheduledDate = formatDate(targetDate);
     dateLabel = `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}`;
-    textWorking = textWorking.replace(numMatch[0], ' ');
-  } else if (/\bhoje\b/i.test(textWorking)) {
+    textWorking = textWorking.replace(numericDateRegex, ' ');
+  } else if (hojeRegex.test(textWorking)) {
     scheduledDate = formatDate(now);
     dateLabel = 'Hoje';
-    textWorking = textWorking.replace(/\bhoje\b/gi, ' ');
-  } else if (/\b(amanh[aã]|amanha)\b/i.test(textWorking)) {
+    textWorking = textWorking.replace(hojeRegex, ' ');
+  } else if (amanhaRegex.test(textWorking)) {
     const tomorrow = new Date(now);
     tomorrow.setDate(now.getDate() + 1);
     scheduledDate = formatDate(tomorrow);
     dateLabel = 'Amanhã';
-    textWorking = textWorking.replace(/\b(amanh[aã]|amanha)\b/gi, ' ');
+    textWorking = textWorking.replace(amanhaRegex, ' ');
   } else {
     // Dias da semana: seg, ter, qua, qui, sex, sab, dom
-    // Pode ter "próxima" ou "proxima" na frente
     const daysMap: Record<string, number> = {
       dom: 0,
       domingo: 0,
@@ -205,7 +214,7 @@ export function parseQuickCapture(
       sábado: 6,
     };
 
-    const weekdayRegex = /\b(?:(pr[oó]xima|proxima)\s+)?(segunda|ter[cç]a|quarta|quinta|sexta|s[aá]bado|domingo|seg|ter|qua|qui|sex|s[aá]b|dom)(?:-feira)?\b/i;
+    const weekdayRegex = /(?<=^|\s)(?:(pr[oó]xima|proxima)\s+)?(segunda|ter[cç]a|quarta|quinta|sexta|s[aá]bado|domingo|seg|ter|qua|qui|sex|s[aá]b|dom)(?:-feira)?(?=\s|$)/iu;
     const weekMatch = textWorking.match(weekdayRegex);
 
     if (weekMatch) {
@@ -220,7 +229,6 @@ export function parseQuickCapture(
         } else if (diff === 0 && isNext) {
           diff = 7;
         } else if (diff === 0 && !isNext) {
-          // Se for o mesmo dia sem 'próxima', assume hoje
           diff = 0;
         } else if (isNext) {
           diff += 7;
@@ -230,7 +238,7 @@ export function parseQuickCapture(
         targetDate.setDate(now.getDate() + diff);
         scheduledDate = formatDate(targetDate);
         dateLabel = formatFriendlyDate(scheduledDate);
-        textWorking = textWorking.replace(weekMatch[0], ' ');
+        textWorking = textWorking.replace(weekdayRegex, ' ');
       }
     }
   }
@@ -261,9 +269,7 @@ export function parseQuickCapture(
   }
 
   // Regra de destino:
-  // "Tudo que anotei rápido na rua (sem frente definida ou sem data) cai aqui [Inbox] para eu analisar em casa com calma"
-  // Notas vão para Ideias & Notas Rápidas da frente (se tiver frente) ou Inbox
-  const isToday = scheduledDate === formatDate(now);
+  // "Texto sem data ou sem frente vai pro Inbox para eu analisar em casa depois."
   const isInbox = !area || !scheduledDate;
 
   return {
