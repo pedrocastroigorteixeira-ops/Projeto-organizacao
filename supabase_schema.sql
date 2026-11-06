@@ -26,21 +26,35 @@ on conflict (id) do update set
   color = excluded.color,
   display_order = excluded.display_order;
 
--- 3. Criação da tabela de Itens (Tarefas, Ideias e Notas)
+-- 3. Criação da tabela de Itens (Tarefas, Ideias, Decisões e Rituais)
 create table if not exists public.items (
   id uuid primary key default gen_random_uuid(),
   title text not null,
-  type text not null default 'task' check (type in ('task', 'note')),
+  content text,
+  type text not null default 'task' check (type in ('task', 'note', 'decision')),
   area_id text references public.frentes(id) on delete set null,
   scheduled_date text, -- Formato YYYY-MM-DD
   scheduled_time text, -- Formato HH:MM
   priority text not null default 'normal' check (priority in ('normal', 'high')),
   effort text check (effort is null or effort in ('quick', 'medium', 'long')),
   recurrence text,
+  advance_warning_days int, -- Aviso prévio configurável (ex: 2 dias antes)
+  is_recurring boolean default false,
+  parent_recurrence_id text,
+  energy_level text check (energy_level is null or energy_level in ('low', 'medium', 'high')),
+  subtasks jsonb default '[]'::jsonb,
   status text not null default 'pending' check (status in ('pending', 'completed', 'archived')),
   created_at timestamptz default now(),
   completed_at timestamptz
 );
+
+-- Migrações idempotentes caso a tabela já tenha sido criada em versão anterior
+alter table public.items add column if not exists content text;
+alter table public.items add column if not exists advance_warning_days int;
+alter table public.items add column if not exists is_recurring boolean default false;
+alter table public.items add column if not exists parent_recurrence_id text;
+alter table public.items add column if not exists energy_level text;
+alter table public.items add column if not exists subtasks jsonb default '[]'::jsonb;
 
 -- Índices para buscas rápidas
 create index if not exists idx_items_status on public.items (status);

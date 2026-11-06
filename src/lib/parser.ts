@@ -62,6 +62,9 @@ export function parseQuickCapture(
       effortLabel: null,
       type: 'task',
       recurrence: null,
+      advanceWarningDays: null,
+      isRecurring: false,
+      tags: [],
       isInbox: true,
     };
   }
@@ -69,13 +72,31 @@ export function parseQuickCapture(
   // Adiciona espaços nas pontas para facilitar regex com lookaround de limites de palavra
   let textWorking = ` ${rawInput} `;
 
-  // 1. Tipo: :nota ou :ideia
+  // 1. Tipo: :nota, :ideia ou :decisao
   let itemType: ItemType = 'task';
-  const typeRegex = /(?<=^|\s)(:nota|:ideia|:idea)(?=\s|$)/iu;
-  const typeMatch = textWorking.match(typeRegex);
-  if (typeMatch) {
+  const noteRegex = /(?<=^|\s)(:nota|:ideia|:idea)(?=\s|$)/iu;
+  const decisionRegex = /(?<=^|\s)(:decisao|:decisão|:decis[aã]o)(?=\s|$)/iu;
+
+  if (noteRegex.test(textWorking)) {
     itemType = 'note';
-    textWorking = textWorking.replace(typeRegex, ' ');
+    textWorking = textWorking.replace(noteRegex, ' ');
+  } else if (decisionRegex.test(textWorking)) {
+    itemType = 'decision';
+    textWorking = textWorking.replace(decisionRegex, ' ');
+  }
+
+  // 2. Tags de contexto: @loja, @investimentos, @pessoal, @equipe, etc.
+  const tags: string[] = [];
+  const contextTagRegex = /(?<=^|\s)@([a-zA-Z0-9À-ÿ_-]+)(?=\s|$)/gu;
+  const contextMatches = textWorking.match(contextTagRegex);
+  if (contextMatches) {
+    for (const match of contextMatches) {
+      const tagClean = match.trim().toLowerCase();
+      if (!tags.includes(tagClean)) {
+        tags.push(tagClean);
+      }
+    }
+    textWorking = textWorking.replace(contextTagRegex, ' ');
   }
 
   // 2. Prioridade alta: !!
@@ -107,12 +128,32 @@ export function parseQuickCapture(
     textWorking = textWorking.replace(longEffortRegex, ' ');
   }
 
-  // 4. Recorrência: 'toda seg', 'todo dia 5', 'todo dia 15', 'a cada X semanas'
+  // 4. Lembrete antecipado configurável: :aviso2d, :aviso3d, avisar 2 dias antes
+  let advanceWarningDays: number | null = null;
+  const warningTagRegex = /(?<=^|\s):aviso(\d+)d(?=\s|$)/iu;
+  const warningPhraseRegex = /(?<=^|\s)(?:avisar|aviso)\s+(\d+)\s+dias?(?:\s+antes)?(?=\s|$)/iu;
+
+  const warningTagMatch = textWorking.match(warningTagRegex);
+  const warningPhraseMatch = textWorking.match(warningPhraseRegex);
+
+  if (warningTagMatch) {
+    advanceWarningDays = parseInt(warningTagMatch[1], 10);
+    textWorking = textWorking.replace(warningTagRegex, ' ');
+  } else if (warningPhraseMatch) {
+    advanceWarningDays = parseInt(warningPhraseMatch[1], 10);
+    textWorking = textWorking.replace(warningPhraseRegex, ' ');
+  }
+
+  // 5. Recorrência & Rituais operacionais: 'toda seg', 'todo dia 5', 'fechamento de mês', ':mensal'
   let recurrence: string | null = null;
-  const recurrenceRegex = /(?<=^|\s)(todo\s+dia\s+\d{1,2}|toda\s+(?:segunda|ter[cç]a|quarta|quinta|sexta|s[aá]bado|domingo|seg|ter|qua|qui|sex|s[aá]b|dom)(?:-feira)?|a\s+cada\s+\d+\s+semanas(?:\s+na\s+\w+)?)(?=\s|$)/iu;
+  const recurrenceRegex = /(?<=^|\s)(fechamento\s+de\s+m[eê]s|todo\s+dia\s+\d{1,2}|toda\s+(?:segunda|ter[cç]a|quarta|quinta|sexta|s[aá]bado|domingo|seg|ter|qua|qui|sex|s[aá]b|dom)(?:-feira)?|a\s+cada\s+\d+\s+semanas(?:\s+na\s+\w+)?|:mensal|:semanal|:diario|:diário)(?=\s|$)/iu;
   const recurrenceMatch = textWorking.match(recurrenceRegex);
   if (recurrenceMatch) {
-    recurrence = recurrenceMatch[1].trim();
+    const rawRec = recurrenceMatch[1].trim();
+    if (rawRec === ':mensal') recurrence = 'mensal';
+    else if (rawRec === ':semanal') recurrence = 'semanal';
+    else if (rawRec === ':diario' || rawRec === ':diário') recurrence = 'todo dia';
+    else recurrence = rawRec;
     textWorking = textWorking.replace(recurrenceRegex, ' ');
   }
 
@@ -243,7 +284,7 @@ export function parseQuickCapture(
     }
   }
 
-  // Se tem recorrência do tipo "todo dia X" e não tem scheduledDate explícito, calcula a próxima data do dia X
+  // Se tem recorrência e não tem scheduledDate explícito, calcula a data da ocorrência
   if (recurrence && !scheduledDate) {
     const dayMatch = recurrence.match(/todo\s+dia\s+(\d{1,2})/i);
     if (dayMatch) {
@@ -254,6 +295,14 @@ export function parseQuickCapture(
       }
       scheduledDate = formatDate(targetDate);
       dateLabel = `Todo dia ${dayNum}`;
+    } else if (
+      normalizeString(recurrence).includes('fechamento de mes') ||
+      recurrence === 'mensal'
+    ) {
+      // Último dia do mês
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      scheduledDate = formatDate(lastDay);
+      dateLabel = 'Fechamento de mês';
     }
   }
 
@@ -285,6 +334,9 @@ export function parseQuickCapture(
     effortLabel,
     type: itemType,
     recurrence,
+    advanceWarningDays,
+    isRecurring: Boolean(recurrence),
+    tags,
     isInbox,
   };
 }

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Area, EffortType, Item, ItemType, PriorityType } from '../types';
 import { EFFORT_LABELS } from '../lib/constants';
 import { formatDate } from '../lib/parser';
+import { checkScheduleConflict } from '../lib/conflicts';
 import {
   X,
   Calendar,
@@ -11,16 +12,20 @@ import {
   Zap,
   Tag,
   AlertCircle,
+  AlertTriangle,
   Trash2,
   Inbox,
   Check,
   FileText,
+  Repeat,
+  BellRing,
 } from 'lucide-react';
 
 interface EditItemModalProps {
   isOpen: boolean;
   item: Item | null;
   areas: Area[];
+  existingItems?: Item[];
   onClose: () => void;
   onSave: (id: string, updates: Partial<Item>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
@@ -30,6 +35,7 @@ export function EditItemModal({
   isOpen,
   item,
   areas,
+  existingItems = [],
   onClose,
   onSave,
   onDelete,
@@ -41,7 +47,22 @@ export function EditItemModal({
   const [priority, setPriority] = useState<PriorityType>('normal');
   const [effort, setEffort] = useState<EffortType | null>(null);
   const [type, setType] = useState<ItemType>('task');
+  const [recurrence, setRecurrence] = useState<string>('');
+  const [advanceWarningDays, setAdvanceWarningDays] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Verificação de choque de horário
+  const conflict =
+    scheduledDate && scheduledTime && item && existingItems.length > 0
+      ? checkScheduleConflict(
+          scheduledDate,
+          scheduledTime,
+          effort === 'quick' ? 30 : effort === 'long' ? 120 : 60,
+          item.id,
+          existingItems,
+          areas
+        )
+      : { hasConflict: false };
 
   useEffect(() => {
     if (item && isOpen) {
@@ -52,6 +73,8 @@ export function EditItemModal({
       setPriority(item.priority);
       setEffort(item.effort);
       setType(item.type);
+      setRecurrence(item.recurrence || '');
+      setAdvanceWarningDays(item.advance_warning_days ?? null);
     }
   }, [item, isOpen]);
 
@@ -71,6 +94,9 @@ export function EditItemModal({
         priority,
         effort,
         type,
+        recurrence: recurrence.trim() || null,
+        advance_warning_days: advanceWarningDays,
+        is_recurring: Boolean(recurrence.trim()),
       });
       onClose();
     } catch (err) {
@@ -256,6 +282,110 @@ export function EditItemModal({
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+
+          {/* AVISO DE CHOQUE DE HORÁRIO */}
+          {conflict.hasConflict && (
+            <div className="rounded-xl bg-amber-950/40 border border-amber-500/50 p-3 text-xs text-amber-200 flex items-start gap-2.5 animate-in fade-in">
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1 w-full">
+                <div className="font-semibold text-amber-300 flex items-center justify-between">
+                  <span>⚠️ Choque de horário detectado!</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">
+                    {conflict.conflictingInterval}
+                  </span>
+                </div>
+                <p className="text-neutral-300">
+                  Já existe o compromisso <strong className="text-white">"{conflict.conflictingItem?.title}"</strong> agendado neste mesmo intervalo em <em>{conflict.conflictingAreaName}</em>.
+                </p>
+                {conflict.suggestedSlot && (
+                  <div className="pt-1 flex items-center gap-2">
+                    <span className="text-neutral-400 text-[11px]">Sugestão livre:</span>
+                    <button
+                      type="button"
+                      onClick={() => setScheduledTime(conflict.suggestedSlot!)}
+                      className="px-2.5 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 font-mono text-xs flex items-center gap-1 transition-colors"
+                    >
+                      <Clock className="w-3 h-3" />
+                      Mudar para às {conflict.suggestedSlot}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Recorrência / Rituais Operacionais */}
+          <div className="space-y-1.5 pt-2 border-t border-border/60">
+            <label className="text-xs font-medium text-gray-300 flex items-center gap-1.5">
+              <Repeat className="h-3.5 w-3.5 text-cyan-400" />
+              <span>Repetição / Ritual Operacional:</span>
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { label: 'Não repete', value: '' },
+                { label: 'Todo dia', value: 'todo dia' },
+                { label: 'Toda seg', value: 'toda seg' },
+                { label: 'Todo dia 5', value: 'todo dia 5' },
+                { label: 'Todo dia 20', value: 'todo dia 20' },
+                { label: 'Fechamento de mês', value: 'fechamento de mês' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setRecurrence(opt.value)}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-medium border transition-colors ${
+                    recurrence === opt.value
+                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-sm'
+                      : 'bg-surface text-gray-400 border-border hover:text-gray-200'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={recurrence}
+              onChange={(e) => setRecurrence(e.target.value)}
+              placeholder="Ou digite personalizado: ex: todo dia 15, toda sexta..."
+              className="mt-1 w-full rounded-xl bg-card border border-border px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:border-amber-500 focus:outline-none"
+            />
+          </div>
+
+          {/* Lembrete Antecipado para Obrigações Financeiras */}
+          <div className="space-y-1.5 pt-2 border-t border-border/60">
+            <label className="text-xs font-medium text-gray-300 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <BellRing className="h-3.5 w-3.5 text-amber-400" />
+                <span>Lembrete antecipado (aviso prévio):</span>
+              </span>
+              <span className="text-[10px] text-gray-500">
+                Evita surpresas em tributos e pró-labore
+              </span>
+            </label>
+            <div className="flex gap-1.5 flex-wrap">
+              {[
+                { label: 'Sem aviso prévio', value: null },
+                { label: '1 dia antes', value: 1 },
+                { label: '2 dias antes', value: 2 },
+                { label: '3 dias antes', value: 3 },
+                { label: '5 dias antes', value: 5 },
+              ].map((opt) => (
+                <button
+                  key={String(opt.value)}
+                  type="button"
+                  onClick={() => setAdvanceWarningDays(opt.value)}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-medium border transition-colors ${
+                    advanceWarningDays === opt.value
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                      : 'bg-surface text-gray-400 border-border hover:text-gray-200'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
 

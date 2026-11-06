@@ -51,3 +51,24 @@ export const EFFORT_LABELS = {
     badgeClass: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
   },
 } as const;
+
+export const ENERGY_LEVELS = {
+  low: {
+    label: 'Baixo foco',
+    desc: 'Tarefas leves, mecânicas ou automáticas',
+    color: '#10B981',
+    badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+  },
+  medium: {
+    label: 'Médio foco',
+    desc: 'Tarefas normais do dia a dia',
+    color: '#F59E0B',
+    badgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+  },
+  high: {
+    label: 'Alto foco',
+    desc: 'Tarefas analíticas, complexas ou estratégicas',
+    color: '#EF4444',
+    badgeClass: 'bg-red-500/15 text-red-300 border-red-500/30',
+  },
+} as const;

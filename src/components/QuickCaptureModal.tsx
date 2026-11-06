@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Area, ParsedCapture } from '../types';
+import { Area, Item, ParsedCapture } from '../types';
 import { parseQuickCapture } from '../lib/parser';
+import { checkScheduleConflict } from '../lib/conflicts';
 import {
   Calendar,
   Clock,
   Zap,
   AlertCircle,
+  AlertTriangle,
   Sparkles,
   Inbox,
   X,
@@ -22,6 +24,8 @@ interface QuickCaptureModalProps {
   onClose: () => void;
   onSave: (capture: ParsedCapture) => Promise<void>;
   areas: Area[];
+  items?: Item[];
+  initialInput?: string;
 }
 
 export function QuickCaptureModal({
@@ -29,23 +33,42 @@ export function QuickCaptureModal({
   onClose,
   onSave,
   areas,
+  items = [],
+  initialInput,
 }: QuickCaptureModalProps) {
   const [input, setInput] = useState('');
   const [parsed, setParsed] = useState<ParsedCapture>(() =>
-    parseQuickCapture('', areas)
+    parseQuickCapture(initialInput || '', areas)
   );
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Detecção inteligente de choque de horário
+  const conflict =
+    parsed.scheduledDate && parsed.scheduledTime && items.length > 0
+      ? checkScheduleConflict(
+          parsed.scheduledDate,
+          parsed.scheduledTime,
+          parsed.effort === 'quick' ? 30 : parsed.effort === 'long' ? 120 : 60,
+          null,
+          items,
+          areas
+        )
+      : { hasConflict: false };
+
   useEffect(() => {
     if (isOpen) {
-      setInput('');
-      setParsed(parseQuickCapture('', areas));
+      const startText = initialInput || '';
+      setInput(startText);
+      setParsed(parseQuickCapture(startText, areas));
       setTimeout(() => {
         inputRef.current?.focus();
+        if (startText && inputRef.current) {
+          inputRef.current.setSelectionRange(startText.length, startText.length);
+        }
       }, 50);
     }
-  }, [isOpen, areas]);
+  }, [isOpen, areas, initialInput]);
 
   useEffect(() => {
     setParsed(parseQuickCapture(input, areas));
@@ -254,6 +277,40 @@ export function QuickCaptureModal({
               </div>
             )}
           </div>
+
+          {/* AVISO DE BLOQUEIO INTELIGENTE: CHOQUE DE HORÁRIO */}
+          {conflict.hasConflict && (
+            <div className="rounded-xl bg-amber-950/40 border border-amber-500/50 p-3 text-xs text-amber-200 flex items-start gap-2.5 animate-in fade-in">
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1 w-full">
+                <div className="font-semibold text-amber-300 flex items-center justify-between">
+                  <span>⚠️ Choque de horário detectado!</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">
+                    {conflict.conflictingInterval}
+                  </span>
+                </div>
+                <p className="text-neutral-300">
+                  Você já tem o compromisso <strong className="text-white">"{conflict.conflictingItem?.title}"</strong> agendado para este mesmo horário em <em>{conflict.conflictingAreaName}</em>.
+                </p>
+                {conflict.suggestedSlot && (
+                  <div className="pt-1 flex items-center gap-2">
+                    <span className="text-neutral-400 text-[11px]">Sugestão livre:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const replaced = input.replace(/\b(\d{1,2}h(\d{2})?|\d{1,2}:\d{2})\b/gi, conflict.suggestedSlot!);
+                        setInput(replaced.includes(conflict.suggestedSlot!) ? replaced : `${input} ${conflict.suggestedSlot}`);
+                      }}
+                      className="px-2.5 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 font-mono text-xs flex items-center gap-1 transition-colors"
+                    >
+                      <Clock className="w-3 h-3" />
+                      Ajustar para às {conflict.suggestedSlot}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Atalhos rápidos clicáveis para o celular ou mouse */}
           <div className="space-y-1.5 pt-1">
