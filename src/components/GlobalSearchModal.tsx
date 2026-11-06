@@ -13,7 +13,6 @@ import {
   Clock,
   Tag,
   ArrowRight,
-  Flame,
   Repeat,
   Sparkles,
 } from 'lucide-react';
@@ -24,7 +23,6 @@ interface GlobalSearchModalProps {
   items: Item[];
   areas: Area[];
   onSelectItem: (item: Item) => void;
-  onStartFocus?: (taskId: string) => void;
   onConvertToToday?: (item: Item) => void;
 }
 
@@ -36,7 +34,6 @@ export function GlobalSearchModal({
   items,
   areas,
   onSelectItem,
-  onStartFocus,
   onConvertToToday,
 }: GlobalSearchModalProps) {
   const [query, setQuery] = useState('');

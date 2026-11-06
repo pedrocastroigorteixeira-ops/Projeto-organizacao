@@ -385,7 +385,7 @@ export function QuickContextModal({
                 type="button"
                 onClick={handleSave}
                 disabled={!title.trim() || isSaving}
-                className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-5 py-2.5 text-xs font-bold text-black hover:brightness-110 active:scale-95 disabled:opacity-40 transition-all shadow-md"
+                className="flex items-center justify-center gap-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 px-5 py-2 text-xs font-medium shadow-sm transition-colors active:scale-95 disabled:opacity-40"
               >
                 <span>{isSaving ? 'Salvando...' : 'Confirmar Contexto'}</span>
                 <CornerDownLeft className="h-3.5 w-3.5" />

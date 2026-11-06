@@ -12,13 +12,11 @@ import {
   Sparkles,
   Coffee,
   Plus,
-  Flame,
 } from 'lucide-react';
 
 interface WeeklyGridProps {
   areas: Area[];
   items: Item[];
-  onStartFocus: (taskId: string) => void;
   onOpenQuickCapture: (prefillDate?: string) => void;
   onEditItem: (item: Item) => void;
 }
@@ -35,7 +33,6 @@ interface DayColumn {
 export function WeeklyGrid({
   areas,
   items,
-  onStartFocus,
   onOpenQuickCapture,
   onEditItem,
 }: WeeklyGridProps) {

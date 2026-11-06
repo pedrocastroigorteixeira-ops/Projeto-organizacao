@@ -287,7 +287,7 @@ export function NotesAndDecisionsView({
         {/* Botão de Nova Entrada */}
         <button
           onClick={() => setIsEditorOpen(!isEditorOpen)}
-          className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2.5 text-xs font-bold text-black shadow-md hover:brightness-110 active:scale-95 transition-all shrink-0"
+          className="flex items-center justify-center gap-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 px-4 py-2 text-xs font-medium shadow-sm transition-colors active:scale-95 shrink-0"
         >
           <Plus className="h-4 w-4 stroke-[2.5]" />
           <span>
@@ -547,7 +547,7 @@ export function NotesAndDecisionsView({
             <button
               type="submit"
               disabled={!formTitle.trim() || isSaving}
-              className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2 text-xs font-bold text-black hover:brightness-110 active:scale-95 disabled:opacity-50 transition-all shadow-md"
+              className="rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 px-5 py-2 text-xs font-medium shadow-sm transition-colors active:scale-95 disabled:opacity-50"
             >
               {isSaving
                 ? 'Salvando...'
@@ -590,7 +590,7 @@ export function NotesAndDecisionsView({
 
           <button
             onClick={() => setIsEditorOpen(true)}
-            className="mt-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 text-xs font-bold text-black"
+            className="mt-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 px-4 py-2 text-xs font-medium shadow-sm transition-colors"
           >
             + Começar agora
           </button>

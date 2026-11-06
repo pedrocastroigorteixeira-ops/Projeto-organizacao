@@ -135,7 +135,7 @@ export function MarkdownViewer({ content, className = '' }: MarkdownViewerProps)
           return (
             <blockquote
               key={idx}
-              className="border-l-2 border-amber-500/60 pl-3 py-1 my-1 italic text-gray-400 bg-amber-500/5 rounded-r"
+              className="border-l border-neutral-700 pl-3.5 py-1 my-1.5 italic text-neutral-300 bg-surface/50 rounded-r"
             >
               {renderInline(trimmed.slice(2))}
             </blockquote>

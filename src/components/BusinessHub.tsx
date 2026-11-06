@@ -9,7 +9,6 @@ import {
   Clock,
   Plus,
   Check,
-  Flame,
   FileText,
   Lightbulb,
   CheckCircle2,
@@ -31,7 +30,6 @@ interface BusinessHubProps {
   selectedAreaId: string;
   onSelectArea: (areaId: string) => void;
   onToggleStatus: (id: string, currentStatus: string) => Promise<void>;
-  onStartFocus: (taskId: string) => void;
   onOpenQuickCapture: (prefillAreaSlug?: string) => void;
   onEditItem: (item: Item) => void;
   onPostpone1Day: (id: string) => Promise<void>;
@@ -53,7 +51,6 @@ export function BusinessHub({
   selectedAreaId,
   onSelectArea,
   onToggleStatus,
-  onStartFocus,
   onOpenQuickCapture,
   onEditItem,
   onPostpone1Day,
@@ -401,16 +398,6 @@ export function BusinessHub({
 
                     <button
                       type="button"
-                      onClick={() => onStartFocus(item.id)}
-                      className="flex items-center gap-1 rounded bg-amber-500/15 hover:bg-amber-500/25 px-2.5 py-1 text-[11px] font-bold text-amber-300 border border-amber-500/30 transition-all"
-                      title="Abrir em Hiperfoco (Tecla F)"
-                    >
-                      <Flame className="h-3 w-3 text-amber-400" />
-                      <span>Foco</span>
-                    </button>
-
-                    <button
-                      type="button"
                       onClick={(e) => handleCheckboxClick(e, item)}
                       title="Concluir compromisso"
                       className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface hover:border-emerald-500 hover:bg-emerald-500/20 text-gray-400 hover:text-emerald-400 transition-colors"
@@ -615,15 +602,7 @@ export function BusinessHub({
                         </button>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => onStartFocus(item.id)}
-                        className="flex items-center gap-1 rounded bg-amber-500/15 hover:bg-amber-500/25 px-2.5 py-1 text-[11px] font-bold text-amber-300 border border-amber-500/30 transition-all"
-                        title="Abrir em Hiperfoco (Tecla F)"
-                      >
-                        <Flame className="h-3 w-3 text-amber-400" />
-                        <span>Hiperfoco (F)</span>
-                      </button>
+
                     </div>
                   </div>
                 );

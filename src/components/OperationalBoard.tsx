@@ -10,7 +10,6 @@ import {
   Plus,
   Check,
   Zap,
-  Flame,
   AlertCircle,
   Filter,
   CheckCircle2,
@@ -22,7 +21,6 @@ interface OperationalBoardProps {
   areas: Area[];
   items: Item[];
   onToggleStatus: (id: string, currentStatus: string) => Promise<void>;
-  onStartFocus: (taskId: string) => void;
   onOpenQuickCapture: (prefillAreaSlug?: string) => void;
   onEditItem: (item: Item) => void;
 }
@@ -31,7 +29,6 @@ export function OperationalBoard({
   areas,
   items,
   onToggleStatus,
-  onStartFocus,
   onOpenQuickCapture,
   onEditItem,
 }: OperationalBoardProps) {
@@ -237,22 +234,6 @@ export function OperationalBoard({
                             className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-gray-600 bg-surface hover:border-emerald-400 hover:bg-emerald-500/20"
                           >
                             <Check className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-emerald-400" />
-                          </button>
-                        </div>
-
-                        {/* Botão de Foco rápido no card */}
-                        <div className="mt-2.5 pt-2 border-t border-border/50 flex items-center justify-end">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onStartFocus(item.id);
-                            }}
-                            className="flex items-center gap-1 rounded bg-surface hover:bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-gray-400 hover:text-amber-300 border border-border hover:border-amber-500/30 transition-all"
-                            title="Abrir em Hiperfoco (F)"
-                          >
-                            <Flame className="h-3 w-3 text-amber-400" />
-                            <span>Hiperfoco</span>
                           </button>
                         </div>
                       </div>

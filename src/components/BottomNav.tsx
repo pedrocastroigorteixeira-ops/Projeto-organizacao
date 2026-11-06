@@ -21,7 +21,7 @@ interface BottomNavProps {
   inboxCount: number;
   todayCount: number;
   onOpenQuickCapture: () => void;
-  onOpenSupabaseConfig: () => void;
+  onOpenSupabaseConfig?: () => void;
   onOpenCalendarSync?: () => void;
 }
 
@@ -182,17 +182,6 @@ export function BottomNav({
                   <span>Sincronizar Google / Apple Calendar</span>
                 </button>
               )}
-
-              <button
-                onClick={() => {
-                  setShowMoreMenu(false);
-                  onOpenSupabaseConfig();
-                }}
-                className="w-full flex items-center gap-3 rounded-xl p-2.5 text-xs font-medium text-gray-400 hover:text-white hover:bg-surface"
-              >
-                <Settings className="h-4 w-4 text-gray-400" />
-                <span>Configurar Sincronização Supabase</span>
-              </button>
             </div>
           </div>
         </div>
@@ -203,8 +192,9 @@ export function BottomNav({
         <div className="mx-auto flex max-w-md items-center justify-around relative">
           {/* Aba Hoje */}
           <button
+            type="button"
             onClick={() => onTabChange('hoje')}
-            className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all relative ${
+            className={`flex flex-col items-center gap-1 p-2 rounded-xl cursor-pointer transition-all relative ${
               currentTab === 'hoje'
                 ? 'text-amber-400 font-bold'
                 : 'text-gray-400 hover:text-gray-200'
@@ -221,8 +211,9 @@ export function BottomNav({
 
           {/* Aba Caixa de Entrada */}
           <button
+            type="button"
             onClick={() => onTabChange('inbox')}
-            className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all relative ${
+            className={`flex flex-col items-center gap-1 p-2 rounded-xl cursor-pointer transition-all relative ${
               currentTab === 'inbox'
                 ? 'text-cyan-400 font-bold'
                 : 'text-gray-400 hover:text-gray-200'
@@ -240,9 +231,10 @@ export function BottomNav({
           {/* Botão Central de Captura Rápida (FAB no celular) */}
           <div className="relative -top-5">
             <button
+              type="button"
               onClick={onOpenQuickCapture}
               aria-label="Captura rápida"
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-400 text-black shadow-lg shadow-amber-500/30 transition-transform active:scale-90 hover:brightness-110 border-2 border-[#0D0D0F]"
+              className="flex h-13 w-13 items-center justify-center rounded-full bg-amber-400 hover:bg-amber-300 text-neutral-950 shadow-md shadow-amber-500/20 cursor-pointer transition-transform active:scale-90 border-2 border-[#0D0D0F]"
             >
               <Plus className="h-7 w-7 stroke-[2.5]" />
             </button>
@@ -250,8 +242,9 @@ export function BottomNav({
 
           {/* Mais Visões (Painel / Semana / Hub) */}
           <button
+            type="button"
             onClick={() => setShowMoreMenu(true)}
-            className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all relative ${
+            className={`flex flex-col items-center gap-1 p-2 rounded-xl cursor-pointer transition-all relative ${
               isMoreTabActive
                 ? 'text-purple-400 font-bold'
                 : 'text-gray-400 hover:text-gray-200'
@@ -269,14 +262,19 @@ export function BottomNav({
             </span>
           </button>
 
-          {/* Config / Supabase */}
+          {/* Configurações */}
           <button
-            onClick={onOpenSupabaseConfig}
-            aria-label="Configuração e sincronização"
-            className="flex flex-col items-center gap-1 p-2 rounded-xl text-gray-500 hover:text-gray-300 transition-colors"
+            type="button"
+            onClick={() => onTabChange('configuracoes')}
+            aria-label="Configurações e Backup"
+            className={`flex flex-col items-center gap-1 p-2 rounded-xl cursor-pointer transition-colors ${
+              currentTab === 'configuracoes'
+                ? 'text-indigo-400 font-bold'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
           >
             <Settings className="h-5 w-5" />
-            <span className="text-[10px]">Sync</span>
+            <span className="text-[10px]">Ajustes</span>
           </button>
         </div>
       </nav>

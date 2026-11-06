@@ -19,7 +19,6 @@ import {
   Edit2,
   CalendarPlus,
   SunMedium,
-  Flame,
   BellRing,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -31,7 +30,6 @@ interface TaskCardProps {
   onPostpone: (id: string, days: number) => Promise<void>;
   onPostponeToWeekend?: (id: string) => Promise<void>;
   onMoveToInbox: (id: string) => Promise<void>;
-  onStartFocus?: (taskId: string) => void;
   onEdit: (item: Item) => void;
   onDelete: (id: string) => Promise<void>;
   isSelected?: boolean;
@@ -44,7 +42,6 @@ export function TaskCard({
   onPostpone,
   onPostponeToWeekend,
   onMoveToInbox,
-  onStartFocus,
   onEdit,
   onDelete,
   isSelected = false,
@@ -85,15 +82,11 @@ export function TaskCard({
       onMouseLeave={() => setIsHovered(false)}
       className={`group relative rounded-xl border p-3.5 transition-all duration-150 outline-none ${
         isSelected
-          ? 'ring-2 ring-amber-500/60 border-amber-500/40 bg-[#1D1D27]'
+          ? 'ring-1 ring-amber-500/40 border-amber-500/40 bg-[#16161D]'
           : isCompleted
-          ? 'border-border/50 bg-[#111116] opacity-60'
-          : 'border-border bg-card hover:bg-card-hover hover:border-border-focus focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 shadow-sm'
+          ? 'border-border/40 bg-[#111115] opacity-60'
+          : 'border-border/80 bg-card hover:bg-card-hover hover:border-neutral-700 focus-visible:border-amber-500/50 focus-visible:ring-1 focus-visible:ring-amber-500/30 shadow-sm'
       }`}
-      style={{
-        borderLeftWidth: area ? '4px' : '2px',
-        borderLeftColor: area ? area.color : undefined,
-      }}
     >
       <div className="flex items-start gap-3">
         {/* Checkbox Circular */}
@@ -104,7 +97,7 @@ export function TaskCard({
           className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all ${
             isCompleted
               ? 'border-emerald-500 bg-emerald-500 text-black shadow-sm'
-              : 'border-gray-500/60 hover:border-emerald-400 hover:bg-emerald-500/10'
+              : 'border-neutral-600 hover:border-emerald-400 hover:bg-emerald-500/10'
           }`}
         >
           {isCompleted && <Check className="h-3.5 w-3.5 stroke-[3]" />}
@@ -112,41 +105,42 @@ export function TaskCard({
 
         {/* Conteúdo Principal */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {/* Tag da Frente / Negócio */}
             {area && (
               <span
-                className="text-[11px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded border"
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-md border"
                 style={{
-                  backgroundColor: `${area.color}15`,
-                  color: area.color,
-                  borderColor: `${area.color}35`,
+                  backgroundColor: `${area.color}14`,
+                  color: area.color === '#EF4444' ? '#F87171' : area.color,
+                  borderColor: `${area.color}30`,
                 }}
               >
-                {area.name}
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: area.color }} />
+                <span>{area.name}</span>
               </span>
             )}
 
-            {/* Horário Marcado (Destaque visual para compromissos com hora) */}
+            {/* Horário Marcado */}
             {item.scheduled_time && !isCompleted && (
-              <span className="flex items-center gap-1 text-[11px] font-bold text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded border border-indigo-500/40 shadow-sm">
-                <Clock className="h-3 w-3 text-indigo-400" />
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-neutral-300 bg-surface px-2 py-0.5 rounded-md border border-neutral-700/80">
+                <Clock className="h-3 w-3 text-neutral-400" />
                 <span>{item.scheduled_time}</span>
               </span>
             )}
 
-            {/* Prioridade Alta (!!) */}
+            {/* Prioridade Alta */}
             {item.priority === 'high' && !isCompleted && (
-              <span className="flex items-center gap-1 text-[11px] font-bold text-red-400 bg-red-500/15 px-1.5 py-0.5 rounded border border-red-500/30 animate-pulse">
-                <AlertCircle className="h-3 w-3" />
-                Prioritária
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-rose-300 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/30">
+                <AlertCircle className="h-3 w-3 text-rose-400" />
+                <span>Prioritária</span>
               </span>
             )}
 
-            {/* Esforço com Ícone e Palavra */}
+            {/* Esforço */}
             {effortConfig && !isCompleted && (
               <span
-                className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded border ${effortConfig.badgeClass}`}
+                className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md border ${effortConfig.badgeClass}`}
                 title={`Esforço: ${effortConfig.name}`}
               >
                 <Zap className="h-3 w-3" />
@@ -154,10 +148,10 @@ export function TaskCard({
               </span>
             )}
 
-            {/* Lembrete antecipado configurável (aviso prévio para obrigações financeiras) */}
+            {/* Lembrete antecipado */}
             {dueStatus.isWarning && !isCompleted && (
               <span
-                className="flex items-center gap-1.5 text-[11px] font-bold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/40 shadow-sm animate-pulse"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-300 bg-amber-500/15 px-2 py-0.5 rounded-md border border-amber-500/30"
                 title={`Vence em ${dueStatus.daysRemaining} dias`}
               >
                 <BellRing className="h-3 w-3 text-amber-400" />
@@ -165,16 +159,16 @@ export function TaskCard({
               </span>
             )}
 
-            {/* Destaque visual: tarefas fixas/recorrentes ganham um ícone discreto de ciclo */}
+            {/* Destaque recorrente */}
             {isRecurring && !isCompleted && (
               <span
-                className="flex items-center gap-1 text-[11px] font-medium text-cyan-300 bg-cyan-500/15 px-2 py-0.5 rounded border border-cyan-500/30"
+                className="inline-flex items-center gap-1 text-xs font-medium text-neutral-300 bg-surface px-2 py-0.5 rounded-md border border-neutral-700/80"
                 title={`Ritual operacional / Tarefa recorrente: ${recurrenceLabel || item.recurrence}`}
               >
-                <Repeat className="h-3 w-3 text-cyan-400" />
+                <Repeat className="h-3 w-3 text-amber-400/80" />
                 <span>{recurrenceLabel || item.recurrence}</span>
                 {item.advance_warning_days && (
-                  <span className="text-[10px] text-cyan-400/80 font-normal">
+                  <span className="text-neutral-400 font-normal ml-0.5">
                     (avisa {item.advance_warning_days}d antes)
                   </span>
                 )}
@@ -183,17 +177,17 @@ export function TaskCard({
 
             {/* Tipo Nota */}
             {item.type === 'note' && (
-              <span className="flex items-center gap-1 text-[11px] font-medium text-purple-300 bg-purple-500/15 px-2 py-0.5 rounded border border-purple-500/30">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/25">
                 <FileText className="h-3 w-3" />
-                Ideia / Nota
+                <span>Nota</span>
               </span>
             )}
           </div>
 
           {/* Título da Tarefa */}
           <p
-            className={`mt-1.5 text-sm sm:text-base leading-snug font-medium text-gray-100 ${
-              isCompleted ? 'line-through text-gray-500' : ''
+            className={`mt-1.5 text-sm sm:text-base leading-snug font-medium text-neutral-100 ${
+              isCompleted ? 'line-through text-neutral-500' : ''
             }`}
           >
             {item.title}
@@ -256,18 +250,6 @@ export function TaskCard({
             <Inbox className="h-3.5 w-3.5 text-purple-400" />
             <span>voltar pro Inbox</span>
           </button>
-
-          {/* Entrar no Modo Foco */}
-          {onStartFocus && !isCompleted && (
-            <button
-              onClick={() => onStartFocus(item.id)}
-              title="Entrar em Hiperfoco nesta tarefa (F)"
-              className="flex items-center gap-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 px-2.5 py-1 text-xs font-semibold border border-amber-500/30 transition-colors active:scale-95 focus:ring-1 focus:ring-amber-400"
-            >
-              <Flame className="h-3.5 w-3.5 text-amber-400" />
-              <span>Foco (F)</span>
-            </button>
-          )}
         </div>
 
         {/* Editar e Excluir */}

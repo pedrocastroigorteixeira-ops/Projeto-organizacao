@@ -407,7 +407,7 @@ export function QuickCaptureModal({
               <button
                 type="submit"
                 disabled={!input.trim() || isSaving}
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2.5 text-xs font-semibold text-black shadow-md hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all"
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 px-5 py-2 text-xs font-medium shadow-sm transition-colors active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
               >
                 <span>{isSaving ? 'Salvando...' : 'Salvar'}</span>
                 <CornerDownLeft className="h-3.5 w-3.5" />

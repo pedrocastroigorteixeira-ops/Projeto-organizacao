@@ -446,7 +446,7 @@ export function EditItemModal({
               <button
                 type="submit"
                 disabled={isSaving}
-                className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2 text-xs font-semibold text-black hover:brightness-110 active:scale-95 disabled:opacity-50"
+                className="rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 px-5 py-2 text-xs font-medium shadow-sm transition-colors active:scale-95 disabled:opacity-50"
               >
                 {isSaving ? 'Salvando...' : 'Salvar Alterações'}
               </button>

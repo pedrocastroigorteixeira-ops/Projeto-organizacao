@@ -24,12 +24,10 @@ import { Sidebar } from '../components/Sidebar';
 import { BottomNav } from '../components/BottomNav';
 import { TaskCard } from '../components/TaskCard';
 import { InboxItemCard } from '../components/InboxItemCard';
-import { DayTimelineBar } from '../components/DayTimelineBar';
 import { QuickCaptureModal } from '../components/QuickCaptureModal';
 import { SupabaseConfigModal } from '../components/SupabaseConfigModal';
 import { EditItemModal } from '../components/EditItemModal';
 import { QuickContextModal } from '../components/QuickContextModal';
-import { HyperfocusModal } from '../components/HyperfocusModal';
 import { OperationalBoard } from '../components/OperationalBoard';
 import { WeeklyGrid } from '../components/WeeklyGrid';
 import { BusinessHub } from '../components/BusinessHub';
@@ -73,8 +71,6 @@ export default function HomePage() {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [contextualizingItem, setContextualizingItem] = useState<Item | null>(null);
-  const [isHyperfocusOpen, setIsHyperfocusOpen] = useState(false);
-  const [hyperfocusTaskId, setHyperfocusTaskId] = useState<string | null>(null);
   const [isCalendarSyncOpen, setIsCalendarSyncOpen] = useState(false);
   const [isCalendarConnected, setIsCalendarConnected] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
@@ -303,24 +299,8 @@ export default function HomePage() {
     [showToast]
   );
 
-  const handleStartFocus = useCallback(
-    (taskId?: string | null) => {
-      if (taskId) {
-        setHyperfocusTaskId(taskId);
-      } else if (todayTimedItems.length > 0) {
-        setHyperfocusTaskId(todayTimedItems[0].id);
-      } else if (todayUntimedItems.length > 0) {
-        setHyperfocusTaskId(todayUntimedItems[0].id);
-      } else if (items.length > 0) {
-        setHyperfocusTaskId(items[0].id);
-      }
-      setIsHyperfocusOpen(true);
-    },
-    [todayTimedItems, todayUntimedItems, items]
-  );
-
   // ==============================================================
-  // TRIAGEM NO TECLADO (CAIXA DE ENTRADA & MODO HIPERFOCO F)
+  // TRIAGEM NO TECLADO (CAIXA DE ENTRADA)
   // ==============================================================
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -341,8 +321,7 @@ export default function HomePage() {
         isSupabaseConfigOpen ||
         isSearchModalOpen ||
         editingItem ||
-        contextualizingItem ||
-        isHyperfocusOpen
+        contextualizingItem
       ) {
         return;
       }
@@ -353,17 +332,6 @@ export default function HomePage() {
         target.tagName === 'TEXTAREA' ||
         target.isContentEditable;
       if (isInput) return;
-
-      // Tecla F ativa o Modo Hiperfoco imediatamente
-      if (e.key === 'f' || e.key === 'F') {
-        e.preventDefault();
-        if (currentTab === 'inbox' && inboxItems.length > 0) {
-          handleStartFocus(inboxItems[selectedIndex]?.id);
-        } else {
-          handleStartFocus();
-        }
-        return;
-      }
 
       if (currentTab === 'inbox' && inboxItems.length > 0) {
         const currentSelected = inboxItems[selectedIndex];
@@ -651,7 +619,6 @@ export default function HomePage() {
         selectedHubAreaId={selectedHubAreaId}
         onSelectHubArea={setSelectedHubAreaId}
         onOpenQuickCapture={() => openQuickCaptureWithPrefill()}
-        onOpenHyperfocus={() => handleStartFocus()}
         onOpenGlobalSearch={() => setIsSearchModalOpen(true)}
         onOpenSupabaseConfig={() => setIsSupabaseConfigOpen(true)}
         isSupabaseActive={isSupabaseActive}
@@ -669,7 +636,6 @@ export default function HomePage() {
             inboxCount={inboxItems.length}
             todayCount={todayItems.filter((i) => i.status === 'pending').length}
             onOpenQuickCapture={() => openQuickCaptureWithPrefill()}
-            onOpenHyperfocus={() => handleStartFocus()}
             onOpenGlobalSearch={() => setIsSearchModalOpen(true)}
             onOpenSupabaseConfig={() => setIsSupabaseConfigOpen(true)}
             isSupabaseActive={isSupabaseActive}
@@ -719,7 +685,7 @@ export default function HomePage() {
                         <p className="text-xs sm:text-sm font-semibold text-amber-200">
                           {overdueItems.length} {overdueItems.length === 1 ? 'pendência de ontem' : 'pendências de ontem'}. Deseja mover para hoje ou adiar?
                         </p>
-                        <p className="text-[11px] text-gray-400">
+                        <p className="text-xs text-neutral-400 mt-0.5">
                           Suas tarefas de ontem não poluem o dia de hoje automaticamente.
                         </p>
                       </div>
@@ -729,7 +695,7 @@ export default function HomePage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <button
                         onClick={handleBringAllOverdueToToday}
-                        className="rounded-xl bg-amber-500 hover:bg-amber-400 px-3 py-1.5 text-xs font-bold text-black transition-all active:scale-95 shadow-sm"
+                        className="rounded-xl bg-amber-400 hover:bg-amber-300 px-3 py-1.5 text-xs font-medium text-neutral-950 transition-colors active:scale-95 shadow-sm"
                       >
                         Mover para hoje
                       </button>
@@ -780,7 +746,6 @@ export default function HomePage() {
                             onPostpone={handlePostpone}
                             onPostponeToWeekend={handlePostponeToWeekend}
                             onMoveToInbox={handleMoveToInbox}
-                            onStartFocus={handleStartFocus}
                             onEdit={(it) => setEditingItem(it)}
                             onDelete={handleDeleteItem}
                           />
@@ -790,11 +755,6 @@ export default function HomePage() {
                   )}
                 </div>
               )}
-
-              {/* ============================================================== */}
-              {/* BARRA DE MOMENTO DO DIA (PASSADO / AGORA / PRÓXIMO) */}
-              {/* ============================================================== */}
-              <DayTimelineBar scheduledItems={todayTimedItems} />
 
               {/* Cabeçalho da Tela Hoje */}
               <div className="flex items-center justify-between">
@@ -809,7 +769,7 @@ export default function HomePage() {
                       })}
                     </span>
                   </h2>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-neutral-400 mt-1">
                     Compromissos agendados e lista prioritária do dia.
                   </p>
                 </div>
@@ -854,7 +814,6 @@ export default function HomePage() {
                           onPostpone={handlePostpone}
                           onPostponeToWeekend={handlePostponeToWeekend}
                           onMoveToInbox={handleMoveToInbox}
-                          onStartFocus={handleStartFocus}
                           onEdit={(it) => setEditingItem(it)}
                           onDelete={handleDeleteItem}
                         />
@@ -870,11 +829,11 @@ export default function HomePage() {
               {todayTimedItems.length > 0 && (
                 <section className="space-y-3">
                   <div className="flex items-center gap-2 px-1">
-                    <Clock className="h-4 w-4 text-indigo-400" />
-                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-indigo-300">
+                    <Clock className="h-4 w-4 text-neutral-400" />
+                    <h3 className="text-xs sm:text-sm font-semibold tracking-wide text-neutral-200">
                       Compromissos com Horário Marcado
                     </h3>
-                    <span className="text-[11px] font-semibold text-gray-500">
+                    <span className="text-xs font-medium text-neutral-400">
                       ({todayTimedItems.length})
                     </span>
                   </div>
@@ -891,7 +850,6 @@ export default function HomePage() {
                           onPostpone={handlePostpone}
                           onPostponeToWeekend={handlePostponeToWeekend}
                           onMoveToInbox={handleMoveToInbox}
-                          onStartFocus={handleStartFocus}
                           onEdit={(it) => setEditingItem(it)}
                           onDelete={handleDeleteItem}
                         />
@@ -920,7 +878,7 @@ export default function HomePage() {
                         >
                           {area.name}
                         </h3>
-                        <span className="text-[11px] font-semibold text-gray-500 ml-1">
+                        <span className="text-xs font-medium text-neutral-400 ml-1">
                           ({areaItems.length})
                         </span>
                       </div>
@@ -936,7 +894,6 @@ export default function HomePage() {
                             onPostpone={handlePostpone}
                             onPostponeToWeekend={handlePostponeToWeekend}
                             onMoveToInbox={handleMoveToInbox}
-                            onStartFocus={handleStartFocus}
                             onEdit={(it) => setEditingItem(it)}
                             onDelete={handleDeleteItem}
                           />
@@ -979,7 +936,6 @@ export default function HomePage() {
                             onPostpone={handlePostpone}
                             onPostponeToWeekend={handlePostponeToWeekend}
                             onMoveToInbox={handleMoveToInbox}
-                            onStartFocus={handleStartFocus}
                             onEdit={(it) => setEditingItem(it)}
                             onDelete={handleDeleteItem}
                           />
@@ -1011,14 +967,14 @@ export default function HomePage() {
                       </span>
                     ) : null}
                   </h2>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-neutral-400 mt-1">
                     Tudo capturado sem prazo, negócio ou categoria cai aqui para triagem sem atrito.
                   </p>
                 </div>
 
                 <button
                   onClick={() => setIsQuickCaptureOpen(true)}
-                  className="flex items-center gap-1.5 self-start sm:self-auto rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-3.5 py-2 text-xs font-bold text-black shadow-md hover:brightness-110 active:scale-95 transition-all"
+                  className="flex items-center gap-1.5 self-start sm:self-auto rounded-xl bg-amber-400 hover:bg-amber-300 px-3.5 py-2 text-xs font-medium text-neutral-950 shadow-sm transition-colors active:scale-95"
                 >
                   <Plus className="h-4 w-4 stroke-[2.5]" />
                   <span>Capturar Novo</span>
@@ -1026,50 +982,50 @@ export default function HomePage() {
               </div>
 
               {/* Guia de Atalhos 100% Teclado */}
-              <div className="rounded-2xl border border-cyan-500/20 bg-[#121620] p-3.5 shadow-sm">
+              <div className="rounded-xl border border-border/80 bg-surface/60 p-3 shadow-sm">
                 <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
-                  <span className="font-semibold text-cyan-300 flex items-center gap-1.5">
-                    <Keyboard className="h-4 w-4 text-cyan-400" />
-                    Triagem 100% pelo teclado:
+                  <span className="font-medium text-neutral-300 flex items-center gap-1.5">
+                    <Keyboard className="h-4 w-4 text-neutral-400" />
+                    Triagem pelo teclado:
                   </span>
 
-                  <div className="flex items-center gap-3 flex-wrap text-gray-300">
+                  <div className="flex items-center gap-3 flex-wrap text-neutral-300">
                     <div className="flex items-center gap-1">
-                      <kbd className="px-1.5 py-0.5 rounded bg-card border border-border font-mono text-[11px] text-cyan-300">
+                      <kbd className="px-1.5 py-0.5 rounded bg-card border border-border font-mono text-xs text-neutral-200">
                         J
                       </kbd>
                       <span>/</span>
-                      <kbd className="px-1.5 py-0.5 rounded bg-card border border-border font-mono text-[11px] text-cyan-300">
+                      <kbd className="px-1.5 py-0.5 rounded bg-card border border-border font-mono text-xs text-neutral-200">
                         K
                       </kbd>
-                      <span className="text-gray-400">navega</span>
+                      <span className="text-neutral-400">navega</span>
                     </div>
 
                     <span className="text-gray-600">•</span>
 
                     <div className="flex items-center gap-1">
-                      <kbd className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 font-mono text-[11px] text-amber-300 font-bold">
+                      <kbd className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 font-mono text-xs text-amber-300 font-medium">
                         Tab
                       </kbd>
-                      <span className="text-amber-200 font-medium">Fazer Hoje</span>
+                      <span className="text-neutral-300 font-medium">Fazer Hoje</span>
                     </div>
 
-                    <span className="text-gray-600">•</span>
+                    <span className="text-neutral-600">•</span>
 
                     <div className="flex items-center gap-1">
-                      <kbd className="px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/40 font-mono text-[11px] text-emerald-300 font-bold">
+                      <kbd className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 font-mono text-xs text-emerald-300 font-medium">
                         D
                       </kbd>
-                      <span className="text-emerald-200 font-medium">Arquivar / Feito</span>
+                      <span className="text-neutral-300 font-medium">Arquivar / Feito</span>
                     </div>
 
-                    <span className="text-gray-600">•</span>
+                    <span className="text-neutral-600">•</span>
 
                     <div className="flex items-center gap-1">
-                      <kbd className="px-1.5 py-0.5 rounded bg-cyan-500/20 border border-cyan-500/40 font-mono text-[11px] text-cyan-300 font-bold">
+                      <kbd className="px-1.5 py-0.5 rounded bg-surface border border-neutral-700 font-mono text-xs text-neutral-200 font-medium">
                         Enter
                       </kbd>
-                      <span className="text-cyan-200 font-medium">Contextualizar</span>
+                      <span className="text-neutral-300 font-medium">Contextualizar</span>
                     </div>
                   </div>
                 </div>
@@ -1120,7 +1076,6 @@ export default function HomePage() {
               areas={areas}
               items={items}
               onToggleStatus={handleToggleStatus}
-              onStartFocus={(taskId) => handleStartFocus(taskId)}
               onOpenQuickCapture={(slug) => openQuickCaptureWithPrefill(slug)}
               onEditItem={(item) => setEditingItem(item)}
             />
@@ -1133,7 +1088,6 @@ export default function HomePage() {
             <WeeklyGrid
               areas={areas}
               items={items}
-              onStartFocus={(taskId) => handleStartFocus(taskId)}
               onOpenQuickCapture={(date) => {
                 if (date) {
                   setQuickCaptureInitialInput(`${date} `);
@@ -1156,7 +1110,6 @@ export default function HomePage() {
               selectedAreaId={selectedHubAreaId}
               onSelectArea={setSelectedHubAreaId}
               onToggleStatus={handleToggleStatus}
-              onStartFocus={(taskId) => handleStartFocus(taskId)}
               onOpenQuickCapture={(slug) => openQuickCaptureWithPrefill(slug)}
               onEditItem={(item) => setEditingItem(item)}
               onPostpone1Day={(id) => handlePostpone(id, 1)}
@@ -1282,24 +1235,6 @@ export default function HomePage() {
         }}
       />
 
-      {/* Modo Hiperfoco (Acionado por Tecla F ou Botão Foco) */}
-      <HyperfocusModal
-        isOpen={isHyperfocusOpen}
-        onClose={() => {
-          setIsHyperfocusOpen(false);
-          setHyperfocusTaskId(null);
-        }}
-        tasks={items}
-        areas={areas}
-        initialTaskId={hyperfocusTaskId}
-        onUpdateTask={async (id, updates) => {
-          await handleSaveEdit(id, updates);
-        }}
-        onCompleteTask={async (id) => {
-          await handleArchiveOrComplete(id);
-        }}
-      />
-
       {/* Modal de Busca Global Instantânea (⌘F) */}
       <GlobalSearchModal
         isOpen={isSearchModalOpen}
@@ -1309,7 +1244,6 @@ export default function HomePage() {
         onSelectItem={(item) => {
           setEditingItem(item);
         }}
-        onStartFocus={(taskId) => handleStartFocus(taskId)}
         onConvertToToday={handleConvertNoteToTask}
       />
     </div>

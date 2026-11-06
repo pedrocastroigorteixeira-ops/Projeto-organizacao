@@ -39,49 +39,46 @@ export function InboxItemCard({
   return (
     <div
       onClick={onSelect}
-      className={`group relative rounded-2xl border transition-all duration-150 p-4 cursor-pointer select-none ${
+      className={`group relative rounded-xl border transition-all duration-150 p-4 cursor-pointer select-none outline-none ${
         isSelected
-          ? 'border-cyan-500/70 bg-[#151A24] ring-2 ring-cyan-500/30 shadow-lg shadow-cyan-950/30'
-          : 'border-border bg-card hover:bg-card-hover hover:border-border-focus'
+          ? 'border-amber-500/50 bg-[#16161D] ring-1 ring-amber-500/30 shadow-md'
+          : 'border-border/80 bg-card hover:bg-card-hover hover:border-neutral-700'
       }`}
-      style={{
-        borderLeftWidth: area ? '4px' : '2px',
-        borderLeftColor: area ? area.color : isSelected ? '#06B6D4' : '#272733',
-      }}
     >
       <div className="flex items-start justify-between gap-3">
         {/* Conteúdo do Item */}
         <div className="flex-1 min-w-0 space-y-1.5">
           {/* Etiquetas Superiores */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {/* Tag de Seleção Ativa no Teclado */}
             {isSelected && (
-              <span className="flex items-center gap-1 text-[10px] font-bold text-cyan-400 bg-cyan-500/20 px-2 py-0.5 rounded-full border border-cyan-500/40">
-                <span>▶ ATIVO</span>
+              <span className="flex items-center gap-1 text-xs font-medium text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/30">
+                <span>▶ Ativo</span>
               </span>
             )}
 
             {/* Negócio / Frente */}
             {area ? (
               <span
-                className="text-[11px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded border"
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-md border"
                 style={{
-                  backgroundColor: `${area.color}15`,
-                  color: area.color,
-                  borderColor: `${area.color}35`,
+                  backgroundColor: `${area.color}14`,
+                  color: area.color === '#EF4444' ? '#F87171' : area.color,
+                  borderColor: `${area.color}30`,
                 }}
               >
-                {area.name}
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: area.color }} />
+                <span>{area.name}</span>
               </span>
             ) : (
-              <span className="text-[11px] font-medium text-gray-500 bg-surface px-2 py-0.5 rounded border border-border">
+              <span className="text-xs font-medium text-neutral-400 bg-surface px-2 py-0.5 rounded-md border border-border">
                 Sem negócio definido
               </span>
             )}
 
             {/* Tipo de Item */}
             {item.type === 'note' && (
-              <span className="flex items-center gap-1 text-[11px] font-medium text-purple-300 bg-purple-500/15 px-2 py-0.5 rounded border border-purple-500/30">
+              <span className="flex items-center gap-1 text-xs font-medium text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/25">
                 <FileText className="h-3 w-3" />
                 Nota / Ideia
               </span>
@@ -90,7 +87,7 @@ export function InboxItemCard({
             {/* Esforço */}
             {effortConfig && (
               <span
-                className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded border ${effortConfig.badgeClass}`}
+                className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md border ${effortConfig.badgeClass}`}
               >
                 <Zap className="h-3 w-3" />
                 <span>{effortConfig.name}</span>
@@ -99,15 +96,15 @@ export function InboxItemCard({
 
             {/* Horário */}
             {item.scheduled_time && (
-              <span className="flex items-center gap-1 text-[11px] font-medium text-indigo-300 bg-indigo-500/15 px-2 py-0.5 rounded border border-indigo-500/30">
-                <Clock className="h-3 w-3" />
+              <span className="flex items-center gap-1 text-xs font-medium text-neutral-300 bg-surface px-2 py-0.5 rounded-md border border-neutral-700/80">
+                <Clock className="h-3 w-3 text-neutral-400" />
                 {item.scheduled_time}
               </span>
             )}
 
             {/* Data (se houver mas faltar negócio) */}
             {item.scheduled_date && (
-              <span className="flex items-center gap-1 text-[11px] font-medium text-amber-300 bg-amber-500/15 px-2 py-0.5 rounded border border-amber-500/30">
+              <span className="flex items-center gap-1 text-xs font-medium text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/30">
                 <Calendar className="h-3 w-3" />
                 Agendado ({item.scheduled_date})
               </span>
@@ -117,7 +114,7 @@ export function InboxItemCard({
           {/* Título */}
           <p
             className={`text-sm sm:text-base font-medium leading-snug transition-colors ${
-              isSelected ? 'text-white' : 'text-gray-200 group-hover:text-white'
+              isSelected ? 'text-white' : 'text-neutral-200 group-hover:text-white'
             }`}
           >
             {item.title}
@@ -132,7 +129,7 @@ export function InboxItemCard({
             onComplete(item.id);
           }}
           title="Marcar como feito / arquivar (D)"
-          className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-gray-600/60 bg-surface text-gray-400 hover:border-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all active:scale-95"
+          className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-neutral-700 bg-surface text-neutral-400 hover:border-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all active:scale-95"
         >
           <Check className="h-4 w-4" />
         </button>
@@ -142,7 +139,7 @@ export function InboxItemCard({
       <div
         className={`mt-3 pt-2.5 border-t flex items-center justify-between flex-wrap gap-2 transition-all ${
           isSelected
-            ? 'border-cyan-500/30 opacity-100'
+            ? 'border-amber-500/30 opacity-100'
             : 'border-border/60 opacity-80 group-hover:opacity-100'
         }`}
       >
@@ -155,9 +152,9 @@ export function InboxItemCard({
               e.stopPropagation();
               onMoveToToday(item.id);
             }}
-            className="flex items-center gap-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 px-2.5 py-1 text-xs font-semibold border border-amber-500/30 transition-all active:scale-95"
+            className="flex items-center gap-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 px-2.5 py-1 text-xs font-medium border border-amber-500/30 transition-all active:scale-95"
           >
-            <span className="hidden sm:inline-block rounded bg-black/40 px-1 py-0.2 text-[10px] font-mono border border-amber-500/30">
+            <span className="hidden sm:inline-block rounded bg-black/40 px-1 py-0.2 text-xs font-mono border border-amber-500/30">
               Tab
             </span>
             <ArrowRight className="h-3 w-3" />
@@ -171,9 +168,9 @@ export function InboxItemCard({
               e.stopPropagation();
               onOpenContextModal(item);
             }}
-            className="flex items-center gap-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 px-2.5 py-1 text-xs font-semibold border border-cyan-500/30 transition-all active:scale-95"
+            className="flex items-center gap-1.5 rounded-lg bg-surface hover:bg-surface-hover text-neutral-200 px-2.5 py-1 text-xs font-medium border border-border/80 hover:border-neutral-700 transition-all active:scale-95"
           >
-            <span className="hidden sm:inline-block rounded bg-black/40 px-1 py-0.2 text-[10px] font-mono border border-cyan-500/30">
+            <span className="hidden sm:inline-block rounded bg-black/40 px-1 py-0.2 text-xs font-mono border border-neutral-700">
               Enter
             </span>
             <SlidersHorizontal className="h-3 w-3" />
